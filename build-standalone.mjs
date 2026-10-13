@@ -1,0 +1,14 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+const root=new URL('.',import.meta.url);
+const read=name=>readFile(new URL(name,root),'utf8');
+const css=(await Promise.all(['style.css','layout.css'].map(read))).join('\n');
+let js=(await Promise.all(['data.js','guides.js','core.js','globe.js','app.js'].map(read))).map(text=>text.replace(/^import[^\n]+\n/gm,'').replace(/^export\s+/gm,'')).join('\n');
+const asset='data:image/png;base64,'+(await readFile(new URL('assets/knowledge-globe.png',root))).toString('base64');
+js=js.replaceAll('assets/knowledge-globe.png',asset).replaceAll('localStorage','orbitStorage');
+const storage=`let temporaryStorage=false;
+const orbitStorage=(()=>{try{const storage=window.localStorage;const probe='orbit-storage-probe-'+Date.now();storage.setItem(probe,'1');storage.removeItem(probe);return storage;}catch{temporaryStorage=true;const records=new Map();return {getItem:key=>records.get(key)??null,setItem:(key,value)=>records.set(key,String(value)),removeItem:key=>records.delete(key)};}})();`;
+js="(()=>{'use strict';\n"+storage+'\n'+js+"\nif(temporaryStorage){document.querySelector('.sidebar-bottom small').textContent='本次记录暂存，请导出备份';toast('当前文件查看器不能永久保存进度，请在学习记录中导出备份。');}\n})();";
+const html=(await read('index.html')).replace(/<link rel="stylesheet"[^>]+>/g,'').replace('</head>','<style>'+css+'</style>\n</head>').replace('<script type="module" src="app.js"></script>',()=>'<script>'+js.replaceAll('</script','<\\/script')+'</script>');
+await mkdir(new URL('standalone/',root),{recursive:true});
+await writeFile(new URL('standalone/index.html',root),html,'utf8');
+console.log('Orbit standalone/index.html prepared');

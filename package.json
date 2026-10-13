@@ -1,0 +1,13 @@
+{
+  "name": "ai-explorer",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node --check app.js && node --check core.js && node --check data.js && node --check guides.js && node --check globe.js && node --check build.mjs && node --check server.mjs",
+    "build": "node build.mjs",
+    "build:standalone": "node build-standalone.mjs"
+  }
+}
